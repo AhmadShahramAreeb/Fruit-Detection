@@ -1,9 +1,19 @@
+# Python
 __pycache__/
-*.pyc
-dataset/
+*.py[cod]
+*.class
+
+# Uploads
+static/uploads/*
+!static/uploads/.gitkeep
+
+# Model files
+*.pth
 best_model.pth
+
+# Environment
 venv/
-*.pyo
-*.pyd
-.Python
-env/
+.env
+
+# System
+.DS_Store
