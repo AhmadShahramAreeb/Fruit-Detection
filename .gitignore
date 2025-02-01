@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*.class
+
+# Virtual Environment
+venv/
+env/
+
+# Model files
+*.pth
+*.h5
+*.onnx
+*.pkl
+
+# Dataset
+dataset/
+data/
+
+# Generated content
+static/uploads/*
+!static/uploads/.gitkeep
+static/*.png
+
+# System
+.DS_Store
+.env

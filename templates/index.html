@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Fruit Detection System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .result-card {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            background-color: white;
+        }
+        .stats-section {
+            margin-top: 30px;
+        }
+        .prediction-bar {
+            height: 24px;
+            border-radius: 12px;
+            margin: 5px 0;
+        }
+        .uploaded-image {
+            max-width: 300px;
+            max-height: 300px;
+            object-fit: contain;
+            margin: 10px 0;
+        }
+        .loading {
+            display: none;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="mb-4">Fruit Detection System</h1>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Upload Image</h5>
+                        <form id="uploadForm">
+                            <div class="mb-3">
+                                <input type="file" class="form-control" name="file" accept=".png,.jpg,.jpeg" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Detect Fruit</button>
+                        </form>
+                        
+                        <div class="loading">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <span class="ms-2">Processing image...</span>
+                        </div>
+                        
+                        <div id="result" class="result-card" style="display: none;">
+                            <h5>Detection Results</h5>
+                            <img id="uploadedImage" class="uploaded-image">
+                            <div id="predictions"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="stats-section">
+                    {% if stats.confusion_matrix %}
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title">Confusion Matrix</h5>
+                            <img src="{{ url_for('static', filename=stats.confusion_matrix) }}" class="img-fluid">
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if stats.training_loss %}
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title">Training Loss</h5>
+                            <img src="{{ url_for('static', filename=stats.training_loss) }}" class="img-fluid">
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if stats.validation_accuracy %}
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title">Validation Accuracy</h5>
+                            <img src="{{ url_for('static', filename=stats.validation_accuracy) }}" class="img-fluid">
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('uploadForm').onsubmit = function(e) {
+            e.preventDefault();
+            
+            const loading = document.querySelector('.loading');
+            const result = document.getElementById('result');
+            const predictions = document.getElementById('predictions');
+            
+            loading.style.display = 'block';
+            result.style.display = 'none';
+            
+            var formData = new FormData(this);
+            
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                loading.style.display = 'none';
+                result.style.display = 'block';
+                
+                if (data.error) {
+                    predictions.innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
+                } else {
+                    document.getElementById('uploadedImage').src = `static/${data.image_path}`;
+                    
+                    let resultsHtml = '';
+                    data.results.forEach(result => {
+                        const probability = parseFloat(result.probability);
+                        resultsHtml += `
+                            <div class="mb-2">
+                                <div class="d-flex justify-content-between">
+                                    <span>${result.class}</span>
+                                    <span>${result.probability}</span>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar" role="progressbar" 
+                                         style="width: ${probability}%" 
+                                         aria-valuenow="${probability}" 
+                                         aria-valuemin="0" 
+                                         aria-valuemax="100"></div>
+                                </div>
+                            </div>`;
+                    });
+                    predictions.innerHTML = resultsHtml;
+                }
+            })
+            .catch(error => {
+                loading.style.display = 'none';
+                predictions.innerHTML = `<div class="alert alert-danger">Error uploading file: ${error}</div>`;
+            });
+        };
+    </script>
+</body>
+</html>
